@@ -15,5 +15,6 @@
     "",
     "curl http://localhost:8080/api/health",
     "curl http://localhost:8080/api/items"
-  ]
+  ],
+  "install": "mvn -q -B dependency:resolve"
 }

@@ -1,0 +1,57 @@
+name: Release
+
+# Publishes to npm when a v* tag is pushed, using npm Trusted Publishing:
+# the registry trusts a short-lived OIDC token minted by GitHub for this
+# workflow, so there is no npm token stored in the repository or in secrets.
+#
+# One-time setup on npmjs.com, under the package's Settings then Trusted
+# Publisher, choosing GitHub Actions:
+#   Organization or user: ansh47
+#   Repository:           forge-by-nexxus
+#   Workflow filename:    release.yml
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write # create the GitHub release
+  id-token: write # mint the OIDC token npm verifies
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs a recent npm; the one bundled with Node may
+      # predate support for it.
+      - name: Use an npm that supports trusted publishing
+        run: npm install -g npm@latest
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Lint templates
+        run: node dist/index.js lint
+
+      - name: Check the tag matches the package version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $pkg" >&2
+            exit 1
+          fi
+
+      - name: Publish to npm
+        run: npm publish
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes

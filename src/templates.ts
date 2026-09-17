@@ -33,6 +33,12 @@ export interface TemplateConfig {
   prompts?: PromptSpec[];
   /** Lines printed after a successful scaffold, tokens rendered same as template files */
   postInstall?: string[];
+  /**
+   * Command `forge create --install` runs in the new project to fetch
+   * dependencies, e.g. "npm install". Omit for templates where setup is too
+   * opinionated to guess (picking a Python virtualenv location, say).
+   */
+  install?: string;
 }
 
 export interface ResolvedTemplate extends TemplateConfig {

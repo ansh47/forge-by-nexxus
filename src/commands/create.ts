@@ -1,4 +1,5 @@
 import * as p from "@clack/prompts";
+import { execSync } from "node:child_process";
 import fs from "fs-extra";
 import path from "node:path";
 import pc from "picocolors";
@@ -10,6 +11,8 @@ export interface CreateOptions {
   force?: boolean;
   yes?: boolean;
   set?: string[];
+  dryRun?: boolean;
+  install?: boolean;
 }
 
 function parseSetFlags(pairs: string[] | undefined): Record<string, string> {
@@ -187,26 +190,58 @@ async function scaffold(
 ): Promise<void> {
   const ctx = extendContext(baseContext(projectName), extra);
   const destDir = path.resolve(options.dir ?? ctx.projectName);
+  const shownDest = path.relative(process.cwd(), destDir) || destDir;
+  const dryRun = Boolean(options.dryRun);
 
-  if ((await fs.pathExists(destDir)) && (await fs.readdir(destDir)).length > 0 && !options.force) {
+  if (
+    !dryRun &&
+    (await fs.pathExists(destDir)) &&
+    (await fs.readdir(destDir)).length > 0 &&
+    !options.force
+  ) {
     const message =
-      `"${path.relative(process.cwd(), destDir) || destDir}" already exists and isn't empty. ` +
-      `Use --force to scaffold into it anyway.`;
+      `"${shownDest}" already exists and isn't empty. Use --force to scaffold into it anyway.`;
     if (viaClack) p.cancel(message);
     else console.error(pc.red(message));
     process.exitCode = 1;
     return;
   }
 
-  const label = `Scaffolding ${template.name}`;
+  const label = dryRun ? `Previewing ${template.name}` : `Scaffolding ${template.name}`;
   const spinner = viaClack ? p.spinner() : undefined;
   spinner?.start(label);
   if (!viaClack) console.log(label + "…");
 
-  const result = await renderTemplate(template.filesDir, destDir, ctx);
-  const doneMessage = `Wrote ${result.filesWritten} files to ${path.relative(process.cwd(), destDir) || destDir}`;
+  const result = await renderTemplate(template.filesDir, destDir, ctx, { dryRun });
+  const doneMessage = dryRun
+    ? `${result.filesWritten} files would be written to ${shownDest}`
+    : `Wrote ${result.filesWritten} files to ${shownDest}`;
   if (spinner) spinner.stop(doneMessage);
   else console.log(pc.green(doneMessage));
+
+  if (dryRun) {
+    console.log();
+    for (const file of result.files) console.log("  " + pc.dim(file));
+    console.log();
+    if (viaClack) p.outro(pc.green("Dry run, nothing written."));
+    return;
+  }
+
+  if (options.install) {
+    if (!template.install) {
+      console.log(pc.yellow(`\n  ${template.id} has no install command configured, skipping --install.\n`));
+    } else {
+      console.log(pc.dim(`\n  Running: ${template.install}\n`));
+      try {
+        execSync(template.install, { cwd: destDir, stdio: "inherit" });
+      } catch {
+        // The scaffold itself succeeded, so report and carry on rather than
+        // leaving the user thinking nothing was created.
+        console.error(pc.red(`\n  Install command failed. The project is still at ${shownDest}.\n`));
+        process.exitCode = 1;
+      }
+    }
+  }
 
   if (template.postInstall && template.postInstall.length > 0) {
     console.log();

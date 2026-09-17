@@ -27,6 +27,8 @@ forge create                          # fully interactive
 forge create gambit my-agent          # template and name given, still prompts for extras
 forge create backend-spring-boot my-api --set groupId=com.logan --yes
 forge create react-ts my-ui --set addons=tailwind,rtk-query --yes
+forge create react-ts my-ui --dry-run  # show what would be written, write nothing
+forge lint                             # check every template for mistakes
 ```
 
 Options for `forge create`:
@@ -37,6 +39,8 @@ Options for `forge create`:
 | `-f, --force` | Scaffold into a non-empty directory anyway. |
 | `-y, --yes` | Skip prompts and use each prompt's default unless overridden by `--set`. |
 | `--set key=value` | Supply a prompt's answer non-interactively. Repeatable. |
+| `--dry-run` | Print the files that would be written without creating anything. |
+| `-i, --install` | Run the template's install command in the new project once it is scaffolded. |
 
 Non-interactive mode also activates automatically when standard input is not a terminal, for example when Forge is called from a script. `--yes` is mainly for forcing that behavior from an interactive terminal.
 
@@ -64,9 +68,14 @@ Non-interactive mode also activates automatically when standard input is not a t
      "postInstall": [
        "cd {{projectName}}",
        "your next steps command here"
-     ]
+     ],
+     "install": "npm install"
    }
    ```
+
+   `install` is the command `forge create --install` runs inside the new
+   project. Leave it out for templates where the setup is too opinionated to
+   guess, such as choosing where a Python virtualenv should live.
 
    `prompts` is optional. Omit it if the template only needs the project name. Each prompt is one of two types:
 
@@ -79,6 +88,15 @@ Non-interactive mode also activates automatically when standard input is not a t
    - File contents: `{{token}}` is replaced.
    - File contents, conditionally: `{{#if flag}}...{{/if}}` or `{{#if flag}}...{{else}}...{{/if}}` keeps or drops a block depending on whether `flag` is truthy. Nesting and `elseif` are not supported. A flag counts as on unless it is missing, empty, `"false"`, or `"0"`, which matches what a multiselect option's `flag` produces. See `react-ts/files/src/App.tsx` or `react-ts/files/package.json`. In the latter, optional dependencies are placed last in each JSON object, with each conditional block supplying its own leading comma, so the file stays valid JSON regardless of which options are selected.
    - Whole files or directories, conditionally: name the path `__if_flag__<rest>`. A gated directory is transparent when its flag is on, meaning its contents are copied directly into the parent with no extra folder appearing, and is skipped entirely when off. A gated file needs a name after the flag, such as `__if_rtkQuery__store` for a directory or `__if_tailwind__tailwind.config.js` for a file, and is written only when the flag is on. See `react-ts/files/src/__if_rtkQuery__/store/`.
+
+   A conditional marker that sits alone on its own line is removed along with
+   that line, so dropping a block leaves no blank line behind. Markers used
+   inline, such as inside an array literal, stay inline.
+
+   Binary files (an icon, a font, a wrapper jar) are detected and copied
+   through byte for byte rather than being treated as text, and file
+   permissions are preserved, so an executable script in a template arrives
+   executable.
 
    Every template receives the following tokens for free, derived from the single project name answer:
 
@@ -95,7 +113,13 @@ Non-interactive mode also activates automatically when standard input is not a t
 
    Anything a template's own prompts collect is also available by name, for example `groupId`. If a prompt named `groupId` is answered, three more tokens are derived automatically: `mainPackage` (`groupId` plus `projectNameCompact`), `groupIdPath`, and `mainPackagePath` (dots converted to slashes, for Java source directories).
 
-3. Run `forge list` to confirm the new template appears. Templates are discovered at runtime with no registration step. Then run `forge create <your-id> test-run --dir /tmp/test-run --yes` to check the generated output before relying on it.
+3. Run `forge lint <your-id>`. It checks the config for missing fields and flags
+   any `{{token}}`, `{{#if flag}}`, or `__token__` in the template that no
+   prompt or built-in variable provides, which is how typos get caught before
+   they reach a generated project. `forge lint` with no argument checks every
+   template and exits non-zero if anything is wrong, so it works in CI.
+
+4. Run `forge list` to confirm the new template appears. Templates are discovered at runtime with no registration step. Then run `forge create <your-id> test-run --dir /tmp/test-run --yes` to check the generated output before relying on it.
 
 ## Project Structure
 
@@ -105,13 +129,33 @@ src/                the CLI itself, written in TypeScript
   engine.ts            template rendering: tokens, {{#if}} conditionals, __if_ path gating
   templates.ts         template discovery, reads templates/*/forge.template.json
   paths.ts             resolves templates/ relative to the installed package
-  commands/            list.ts, create.ts
+  commands/            list.ts, create.ts, lint.ts
+  *.test.ts            unit tests, run with npm test
 templates/          the built-in scaffolds, see "Creating a Custom Template" above
+.github/workflows/  ci.yml builds and tests every template, release.yml publishes on a tag
 ```
+
+## Development
+
+```bash
+npm test                  # unit tests for the case helpers and the render engine
+npm run lint:templates     # build, then check every template
+npm run dev -- list         # run the CLI straight from src without building
+```
+
+CI does more than run the unit tests: it scaffolds every template and then
+actually compiles the result, with Maven for the Spring templates, Vite and
+`tsc` for the React ones, and pytest for the Python one. A scaffold generator
+can pass its own tests while emitting projects that no longer build, and that
+is the failure worth catching.
+
+Releases are published to npm by tagging a version, for example `v0.2.0`.
+The release workflow authenticates with npm through GitHub OIDC (Trusted
+Publishing), so no npm token is stored in the repository or in secrets.
 
 ## Contributing
 
-This started as a personal tool and is not yet set up for external contributions. Issues and suggestions are welcome once the repository is public.
+This started as a personal tool. Issues and suggestions are welcome.
 
 ## License
 

@@ -39,5 +39,6 @@
     "cd {{projectName}}",
     "npm install",
     "npm run dev"
-  ]
+  ],
+  "install": "npm install"
 }

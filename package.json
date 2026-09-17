@@ -1,6 +1,6 @@
 {
   "name": "forge-by-nexxus",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A personal, extensible project scaffold generator. Spins up new projects from your own templates.",
   "license": "MIT",
   "author": "Ankit Shrivastava",
@@ -33,6 +33,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && shx chmod +x dist/index.js",
     "dev": "tsx src/index.ts",
+    "test": "node --import tsx --test src/*.test.ts",
+    "lint:templates": "npm run build && node dist/index.js lint",
     "prepack": "npm run build"
   },
   "engines": {

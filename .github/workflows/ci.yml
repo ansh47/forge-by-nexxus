@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A scaffold generator can pass its own tests while silently emitting projects
+# that no longer compile, so the template jobs below scaffold each template and
+# actually build the output.
+jobs:
+  cli:
+    name: CLI build, tests and template lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Lint templates
+        run: node dist/index.js lint
+
+  templates-node:
+    name: Build ${{ matrix.case.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        case:
+          - name: react-ts (no add-ons)
+            args: react-ts sample-app --yes
+            dir: sample-app
+          - name: react-ts (all add-ons)
+            args: react-ts sample-app --yes --set addons=framer-motion,lucide-react,tailwind,rtk-query
+            dir: sample-app
+          - name: react-ts (tailwind + rtk-query)
+            args: react-ts sample-app --yes --set addons=tailwind,rtk-query
+            dir: sample-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Scaffold
+        run: node dist/index.js create ${{ matrix.case.args }} --dir /tmp/out
+      - name: Install and build the generated project
+        working-directory: /tmp/out
+        run: |
+          npm install --no-audit --no-fund
+          npx tsc -b
+          npx vite build
+
+  templates-java:
+    name: Build Java templates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - run: npm ci
+      - run: npm run build
+
+      - name: Scaffold backend-spring-boot
+        run: node dist/index.js create backend-spring-boot sample-api --yes --set groupId=com.example --dir /tmp/backend
+      - name: Build and test it
+        working-directory: /tmp/backend
+        run: mvn -B -ntp package
+
+      - name: Scaffold fullstack-spring-react
+        run: node dist/index.js create fullstack-spring-react sample-stack --yes --set groupId=com.example --dir /tmp/fullstack
+      - name: Build and test the backend
+        working-directory: /tmp/fullstack/backend
+        run: mvn -B -ntp package
+      - name: Install and build the frontend
+        working-directory: /tmp/fullstack/frontend
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+
+  templates-python:
+    name: Build gambit template
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npm run build
+
+      - name: Scaffold gambit
+        run: node dist/index.js create gambit sample-agent --yes --dir /tmp/agent
+      - name: Install and test the generated project
+        working-directory: /tmp/agent
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+          pytest
