@@ -3,9 +3,28 @@
   "version": "0.1.0",
   "description": "A personal, extensible project scaffold generator. Spins up new projects from your own templates.",
   "license": "MIT",
+  "author": "Ankit Shrivastava",
+  "keywords": [
+    "cli",
+    "scaffold",
+    "generator",
+    "boilerplate",
+    "template",
+    "spring-boot",
+    "react",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ansh47/forge-by-nexxus.git"
+  },
+  "homepage": "https://github.com/ansh47/forge-by-nexxus#readme",
+  "bugs": {
+    "url": "https://github.com/ansh47/forge-by-nexxus/issues"
+  },
   "type": "module",
   "bin": {
-    "forge": "./dist/index.js"
+    "forge": "dist/index.js"
   },
   "files": [
     "dist",
