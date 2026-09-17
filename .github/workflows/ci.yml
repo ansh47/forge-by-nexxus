@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # A scaffold generator can pass its own tests while silently emitting projects
 # that no longer compile, so the template jobs below scaffold each template and
 # actually build the output.

@@ -18,6 +18,14 @@ permissions:
   contents: write # create the GitHub release
   id-token: write # mint the OIDC token npm verifies
 
+# Queue rather than cancel: a run that is midway through publishing should
+# finish rather than be killed. The publish and release steps below are
+# written to be safe when a version has already gone out, so a duplicate or
+# manually retried run is harmless.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -49,9 +57,21 @@ jobs:
           fi
 
       - name: Publish to npm
-        run: npm publish
+        run: |
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "$name@$version is already on the registry, nothing to publish."
+          else
+            npm publish
+          fi
 
       - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists, leaving it alone."
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+          fi
