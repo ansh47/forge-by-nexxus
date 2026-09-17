@@ -1,0 +1,43 @@
+{
+  "id": "react-ts",
+  "name": "Frontend: React + TypeScript",
+  "description": "Vite + React + TypeScript, no backend attached. Framer Motion, Lucide React, Tailwind CSS and RTK Query are all optional add-ons — React + TS is the only thing you always get.",
+  "prompts": [
+    {
+      "name": "addons",
+      "type": "multiselect",
+      "message": "Optional add-ons (space to toggle, enter to confirm, none is fine)",
+      "options": [
+        {
+          "value": "framer-motion",
+          "flag": "framerMotion",
+          "label": "Framer Motion",
+          "hint": "animations"
+        },
+        {
+          "value": "lucide-react",
+          "flag": "lucideReact",
+          "label": "Lucide React",
+          "hint": "icons"
+        },
+        {
+          "value": "tailwind",
+          "flag": "tailwind",
+          "label": "Tailwind CSS",
+          "hint": "utility-class styling"
+        },
+        {
+          "value": "rtk-query",
+          "flag": "rtkQuery",
+          "label": "RTK Query",
+          "hint": "Redux Toolkit data fetching"
+        }
+      ]
+    }
+  ],
+  "postInstall": [
+    "cd {{projectName}}",
+    "npm install",
+    "npm run dev"
+  ]
+}

@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: {{projectName}}
+
+server:
+  port: 8080
+
+# CORS is handled in WebConfig for the Vite dev server (localhost:5173).
+# Tighten or remove allowed-origins before deploying anywhere real.
+app:
+  cors:
+    allowed-origins: http://localhost:5173

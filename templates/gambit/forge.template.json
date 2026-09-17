@@ -1,0 +1,15 @@
+{
+  "id": "gambit",
+  "name": "Gambit (Python agentic task tool)",
+  "description": "A minimal Claude-powered agent loop (task → tool calls → result), packaged as an installable CLI. Comes with one example tool to replace.",
+  "prompts": [],
+  "postInstall": [
+    "cd {{projectName}}",
+    "python -m venv .venv && source .venv/bin/activate",
+    "pip install -e '.[dev]'",
+    "cp .env.example .env      # then fill in ANTHROPIC_API_KEY",
+    "",
+    "{{projectName}} \"say hello using the echo tool\"",
+    "pytest                     # runs the (network-free) tool tests"
+  ]
+}

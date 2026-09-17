@@ -1,0 +1,19 @@
+{
+  "id": "backend-spring-boot",
+  "name": "Backend: Spring Boot",
+  "description": "Standalone Spring Boot (Maven) API skeleton with a worked example resource (controller, in-memory repo, error handling) so you're editing real code, not staring at a blank Application.java.",
+  "prompts": [
+    {
+      "name": "groupId",
+      "message": "Java group ID (e.g. com.logan)",
+      "default": "com.logan"
+    }
+  ],
+  "postInstall": [
+    "cd {{projectName}}",
+    "mvn spring-boot:run",
+    "",
+    "curl http://localhost:8080/api/health",
+    "curl http://localhost:8080/api/items"
+  ]
+}

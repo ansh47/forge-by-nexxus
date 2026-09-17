@@ -1,0 +1,21 @@
+{
+  "id": "fullstack-spring-react",
+  "name": "Fullstack: Spring Boot + React",
+  "description": "Spring Boot (Maven) backend + Vite/React/TypeScript frontend, wired together with a shared dev script.",
+  "prompts": [
+    {
+      "name": "groupId",
+      "message": "Java group ID (e.g. com.logan)",
+      "default": "com.logan"
+    }
+  ],
+  "postInstall": [
+    "cd {{projectName}}",
+    "npm install                 # root: installs 'concurrently' for the dev script",
+    "npm run dev                 # runs backend (:8080) and frontend (:5173) together",
+    "",
+    "Or separately:",
+    "  cd backend && mvn spring-boot:run",
+    "  cd frontend && npm install && npm run dev"
+  ]
+}
