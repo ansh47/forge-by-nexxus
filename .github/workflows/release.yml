@@ -73,17 +73,23 @@ jobs:
             npm publish
           fi
 
-          # Verify rather than trust. A publish that quietly does nothing used
-          # to leave a green run next to a version that was never released, so
-          # the registry is checked here and the step fails if it is missing.
-          for attempt in 1 2 3 4 5 6; do
-            found="$(npm view "$name@$version" version 2>/dev/null || true)"
-            if [ "$found" = "$version" ]; then
+          # Verify rather than trust, because a publish that quietly does
+          # nothing would otherwise leave a green run next to a version that
+          # was never released.
+          #
+          # This reads the registry directly with a cache buster rather than
+          # through npm view, whose packument responses are CDN cached: a
+          # freshly published version can stay invisible to npm view for well
+          # over a minute, which previously failed this step for a release
+          # that had in fact succeeded.
+          for attempt in $(seq 1 20); do
+            if curl -fsS "https://registry.npmjs.org/$name/$version?cb=$(date +%s)-$attempt" \
+                 | grep -q "\"version\"[[:space:]]*:[[:space:]]*\"$version\""; then
               echo "Confirmed $name@$version is on the registry."
               exit 0
             fi
-            echo "Not visible on the registry yet, retrying ($attempt of 6)..."
-            sleep 10
+            echo "Not visible on the registry yet, retrying ($attempt of 20)..."
+            sleep 15
           done
           echo "$name@$version is still not on the registry after publishing." >&2
           exit 1
