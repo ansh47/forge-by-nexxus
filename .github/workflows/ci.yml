@@ -36,15 +36,22 @@ jobs:
       fail-fast: false
       matrix:
         case:
+          # buildIn is the path under /tmp/out holding the npm project to build,
+          # which is the root for react-ts and frontend/ for the fullstack one.
           - name: react-ts (no add-ons)
             args: react-ts sample-app --yes
-            dir: sample-app
+            buildIn: .
           - name: react-ts (all add-ons)
             args: react-ts sample-app --yes --set addons=framer-motion,lucide-react,tailwind,rtk-query
-            dir: sample-app
+            buildIn: .
           - name: react-ts (tailwind + rtk-query)
             args: react-ts sample-app --yes --set addons=tailwind,rtk-query
-            dir: sample-app
+            buildIn: .
+          # The fullstack frontend with no add-ons, which takes the plain fetch
+          # path rather than RTK Query. Its backend is built in templates-java.
+          - name: fullstack frontend (no add-ons)
+            args: fullstack-spring-react sample-stack --yes --set groupId=com.example
+            buildIn: frontend
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -56,7 +63,7 @@ jobs:
       - name: Scaffold
         run: node dist/index.js create ${{ matrix.case.args }} --dir /tmp/out
       - name: Install and build the generated project
-        working-directory: /tmp/out
+        working-directory: /tmp/out/${{ matrix.case.buildIn }}
         run: |
           npm install --no-audit --no-fund
           npx tsc -b
@@ -85,8 +92,11 @@ jobs:
         working-directory: /tmp/backend
         run: mvn -B -ntp package
 
+      # Scaffolded with every frontend add-on on, so the conditional wiring
+      # (Provider, store files, Tailwind plugin, dependency list) is exercised.
+      # The no-add-on shape is covered by the templates-node job below.
       - name: Scaffold fullstack-spring-react
-        run: node dist/index.js create fullstack-spring-react sample-stack --yes --set groupId=com.example --dir /tmp/fullstack
+        run: node dist/index.js create fullstack-spring-react sample-stack --yes --set groupId=com.example --set addons=framer-motion,lucide-react,tailwind,rtk-query --dir /tmp/fullstack
       - name: Build and test the backend
         working-directory: /tmp/fullstack/backend
         run: mvn -B -ntp package

@@ -1,12 +1,43 @@
 {
   "id": "fullstack-spring-react",
   "name": "Fullstack: Spring Boot + React",
-  "description": "Spring Boot (Maven) backend + Vite/React/TypeScript frontend, wired together with a shared dev script.",
+  "description": "Spring Boot (Maven) backend + Vite/React/TypeScript frontend, wired together with a dev proxy and a shared dev script. The frontend takes the same optional add-ons as the react-ts template.",
   "prompts": [
     {
       "name": "groupId",
       "message": "Java group ID (e.g. com.logan)",
       "default": "com.logan"
+    },
+    {
+      "name": "addons",
+      "type": "multiselect",
+      "message": "Optional frontend add-ons (space to toggle, enter to confirm, none is fine)",
+      "options": [
+        {
+          "value": "framer-motion",
+          "flag": "framerMotion",
+          "label": "Framer Motion",
+          "hint": "animations"
+        },
+        {
+          "value": "lucide-react",
+          "flag": "lucideReact",
+          "label": "Lucide React",
+          "hint": "icons"
+        },
+        {
+          "value": "tailwind",
+          "flag": "tailwind",
+          "label": "Tailwind CSS",
+          "hint": "utility-class styling"
+        },
+        {
+          "value": "rtk-query",
+          "flag": "rtkQuery",
+          "label": "RTK Query",
+          "hint": "calls your Spring backend instead of plain fetch"
+        }
+      ]
     }
   ],
   "postInstall": [

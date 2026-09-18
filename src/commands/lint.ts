@@ -7,6 +7,7 @@ import {
   GATE_RE,
   GROUP_ID_DERIVED_KEYS,
   looksBinary,
+  TEMPLATE_SUFFIX,
   TOKEN_RE,
 } from "../engine.js";
 import { getTemplate, listTemplates, type ResolvedTemplate } from "../templates.js";
@@ -130,6 +131,16 @@ async function checkFiles(template: ResolvedTemplate, known: Set<string>): Promi
       const raw = await fs.readFile(full);
       if (looksBinary(raw)) continue; // nothing to substitute in a binary payload
       const content = raw.toString("utf8");
+
+      // A file carrying conditional blocks is not valid in its own language,
+      // so editors report it as broken source. The .tmpl suffix keeps them out
+      // of it and is stripped when the file is written.
+      if (content.includes("{{#if") && !entry.name.endsWith(TEMPLATE_SUFFIX)) {
+        problems.push({
+          file: relative,
+          message: `contains conditional blocks, so it should be named "${entry.name}${TEMPLATE_SUFFIX}" to stop editors reporting it as broken source`,
+        });
+      }
 
       for (const match of content.matchAll(BLOCK_IF_RE)) {
         if (!known.has(match[1])) {

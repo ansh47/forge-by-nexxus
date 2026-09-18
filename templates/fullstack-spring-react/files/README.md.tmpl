@@ -1,0 +1,54 @@
+# {{projectNameHuman}}
+
+Scaffolded with `forge` from the `fullstack-spring-react` template.
+
+- `backend/` — Spring Boot (Maven), package `{{mainPackage}}`, serves the API on `:8080`
+- `frontend/` — Vite + React + TypeScript, dev server on `:5173` (proxies `/api` to the backend)
+
+## Run it
+
+```bash
+npm install       # installs the root dev-orchestration package (concurrently)
+npm run dev        # runs backend + frontend together
+```
+
+Or run each side on its own:
+
+```bash
+cd backend && mvn spring-boot:run
+cd frontend && npm install && npm run dev
+```
+
+Open http://localhost:5173. The landing page calls `GET /api/hello` through the
+proxy and shows the result, so you can see straight away whether both halves are
+talking to each other. If the backend is not running, the page says so instead of
+failing silently.
+
+{{#if addons}}
+## Frontend add-ons
+
+Picked at scaffold time, so this copy only has what you selected:
+
+{{/if}}
+{{#if framerMotion}}
+- **Framer Motion** — one animated card in `frontend/src/App.tsx` as a working example.
+{{/if}}
+{{#if lucideReact}}
+- **Lucide React** — icons imported per component.
+{{/if}}
+{{#if tailwind}}
+- **Tailwind CSS** — wired through `@tailwindcss/vite`, no config file needed to start.
+{{/if}}
+{{#if rtkQuery}}
+- **RTK Query** — `frontend/src/store/` holds the store and an API slice pointed at
+  this project's own backend, so the call on the landing page goes through RTK Query
+  rather than plain `fetch`.
+{{/if}}
+
+## Build
+
+```bash
+npm run build
+```
+
+Builds the frontend to `frontend/dist/` and packages the backend jar in `backend/target/`.
