@@ -26,6 +26,21 @@ interface Problem {
  */
 const LITERAL_DUNDERS = new Set(["init", "main", "pycache", "all", "version"]);
 
+/**
+ * npm drops these from every published tarball no matter what the "files"
+ * field or an .npmignore says. A template holding one literally works
+ * perfectly from a checkout and then ships without it, so the projects people
+ * scaffold from the released package quietly lose the file. Name it with the
+ * __dot__ prefix instead, which npm carries and the engine turns back.
+ */
+const STRIPPED_BY_NPM = new Set([
+  ".gitignore",
+  ".npmignore",
+  ".npmrc",
+  ".DS_Store",
+  "package-lock.json",
+]);
+
 /** Everything a template can legitimately reference, given its own prompts. */
 function knownVariables(template: ResolvedTemplate): Set<string> {
   const known = new Set<string>(BASE_CONTEXT_KEYS);
@@ -111,6 +126,20 @@ async function checkFiles(template: ResolvedTemplate, known: Set<string>): Promi
 
       // __token__ in a filename, ignoring the __if_flag__ gate prefix.
       const nameToScan = gate ? gate[2] : entry.name;
+
+      if (STRIPPED_BY_NPM.has(nameToScan)) {
+        const suggested = nameToScan.startsWith(".")
+          ? `__dot__${nameToScan.slice(1)}`
+          : nameToScan;
+        problems.push({
+          file: relative,
+          message:
+            `npm removes "${nameToScan}" from the published package, so this template would ship without it. ` +
+            (suggested === nameToScan
+              ? "Rename it, or generate it from the template's postInstall notes instead."
+              : `Rename it to "${suggested}", which renders back to "${nameToScan}".`),
+        });
+      }
       for (const match of nameToScan.matchAll(/__([a-zA-Z0-9_]+)__/g)) {
         const token = match[1];
         const isDunder = LITERAL_DUNDERS.has(token);

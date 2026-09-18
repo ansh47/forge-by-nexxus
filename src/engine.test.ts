@@ -37,6 +37,10 @@ describe("baseContext", () => {
     assert.equal(ctx.envPrefix, "MY_COOL_APP");
     assert.equal(ctx.year, String(new Date().getFullYear()));
   });
+
+  it("provides dot, so templates can carry files npm would strip", () => {
+    assert.equal(baseContext("anything").dot, ".");
+  });
 });
 
 describe("extendContext", () => {
@@ -236,6 +240,21 @@ describe("renderTemplate", () => {
       "contents are still rendered normally",
     );
     assert.ok(result.files.includes("App.tsx"));
+  });
+
+  it("writes __dot__ names back as dotfiles", async () => {
+    const src = await tmpDir("forge-src-");
+    const dest = await tmpDir("forge-dest-");
+    await fs.outputFile(path.join(src, "__dot__gitignore"), "node_modules/\n");
+    await fs.outputFile(path.join(src, "__if_flag____dot__env"), "KEY={{projectName}}\n");
+
+    const result = await renderTemplate(src, dest, { ...baseContext("my-app"), flag: "true" });
+
+    assert.equal(await fs.pathExists(path.join(dest, ".gitignore")), true);
+    assert.equal(await fs.pathExists(path.join(dest, "__dot__gitignore")), false);
+    // Gating and the dot prefix compose, the same way gating and .tmpl do.
+    assert.equal(await fs.readFile(path.join(dest, ".env"), "utf8"), "KEY=my-app\n");
+    assert.ok(result.files.includes(".gitignore"));
   });
 
   it("fails loudly when a gated file has no name after the flag", async () => {

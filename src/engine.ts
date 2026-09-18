@@ -27,6 +27,13 @@ export function baseContext(rawProjectName: string): Context {
     projectNameHuman: toTitleCase(rawProjectName),
     envPrefix: toSnakeCase(rawProjectName).toUpperCase(),
     year: String(new Date().getFullYear()),
+
+    // npm strips .gitignore from every published package, whatever the "files"
+    // field or an .npmignore says, so a template holding one literally ships
+    // without it and scaffolds projects that have none. Templates name the file
+    // __dot__gitignore instead, and this turns it back into .gitignore on the
+    // way out. It works for any dotfile npm refuses to carry.
+    dot: ".",
   };
 }
 
@@ -100,7 +107,13 @@ export function renderPathSegment(segment: string, ctx: Context): string {
 // are copied straight into the parent (no extra directory level appears in
 // the output) unless something follows the marker to rename it. Files need
 // a name after the marker, e.g. __if_tailwind__tailwind.config.js.
-export const GATE_RE = /^__if_([a-zA-Z0-9_]+)__(.*)$/;
+//
+// The flag is matched lazily so the marker ends at the FIRST "__" rather than
+// the last. Greedy matching swallowed any later token in the same segment, so
+// __if_docker____dot__dockerignore read as a flag called "docker____dot" and
+// the file silently vanished. Flag names never contain "__", so nothing
+// legitimate relies on the greedy reading.
+export const GATE_RE = /^__if_([a-zA-Z0-9_]+?)__(.*)$/;
 
 /**
  * A template file that carries conditional blocks is not valid in its own

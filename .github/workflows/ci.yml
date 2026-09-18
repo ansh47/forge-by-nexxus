@@ -29,6 +29,60 @@ jobs:
       - name: Lint templates
         run: node dist/index.js lint
 
+  # Everything else here scaffolds from the checkout, which is not what anyone
+  # installs. npm silently drops some filenames from a published package, and
+  # .gitignore shipping this way went unnoticed through several releases, so
+  # this job packs the tarball and scaffolds from the installed package
+  # instead.
+  packaging:
+    name: Scaffold from the packed tarball
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: Pack and install it somewhere clean
+        run: |
+          TARBALL="$(npm pack --silent)"
+          mkdir -p /tmp/consumer
+          cd /tmp/consumer
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund "$GITHUB_WORKSPACE/$TARBALL"
+
+      - name: Every template still produces the files it ships
+        working-directory: /tmp/consumer
+        run: |
+          set -euo pipefail
+          forge() { ./node_modules/.bin/forge "$@"; }
+
+          forge create react-ts a --yes --dir /tmp/out/a
+          forge create fullstack-spring-react b --yes --set groupId=com.example --dir /tmp/out/b
+          forge create backend-spring-boot c --yes --set groupId=com.example --dir /tmp/out/c
+          forge create gambit d --yes --dir /tmp/out/d
+
+          missing=0
+          for f in /tmp/out/a/.gitignore \
+                   /tmp/out/b/.gitignore /tmp/out/b/backend/.gitignore /tmp/out/b/frontend/.gitignore \
+                   /tmp/out/c/.gitignore \
+                   /tmp/out/d/.gitignore /tmp/out/d/.env.example; do
+            if [ -f "$f" ]; then echo "ok      $f"; else echo "MISSING $f"; missing=1; fi
+          done
+
+          # A rename that failed to render back is worse than a missing file,
+          # because the project looks complete and quietly is not.
+          if find /tmp/out -name '*__dot__*' -o -name '*__if_*' -o -name '*.tmpl' | grep -q .; then
+            echo "Unrendered template markers survived into the output:"
+            find /tmp/out -name '*__dot__*' -o -name '*__if_*' -o -name '*.tmpl'
+            missing=1
+          fi
+
+          exit $missing
+
   templates-node:
     name: Build ${{ matrix.case.name }}
     runs-on: ubuntu-latest

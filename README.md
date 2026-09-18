@@ -93,6 +93,17 @@ Non-interactive mode also activates automatically when standard input is not a t
    that line, so dropping a block leaves no blank line behind. Markers used
    inline, such as inside an array literal, stay inline.
 
+   Dotfiles need one extra step. npm removes `.gitignore`, `.npmrc`,
+   `.npmignore` and a few other names from every published package, whatever
+   the `files` field says, so a template holding one works perfectly from a
+   checkout and then ships without it. Name the file `__dot__gitignore`
+   instead: `dot` is an always-present variable equal to `.`, so the ordinary
+   filename substitution writes it back as `.gitignore`. It composes with
+   gating, as in `__if_docker____dot__dockerignore`. `forge lint` rejects any
+   template carrying one of the stripped names literally, and CI scaffolds
+   from a packed tarball rather than the checkout so the packaged output is
+   what gets checked.
+
    A file containing conditional blocks is not valid TypeScript, JSON or CSS
    as written, so editors report it as broken source. Name such a file with a
    trailing `.tmpl` (`App.tsx.tmpl`) and the suffix is stripped when the file
