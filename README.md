@@ -93,6 +93,14 @@ Non-interactive mode also activates automatically when standard input is not a t
    that line, so dropping a block leaves no blank line behind. Markers used
    inline, such as inside an array literal, stay inline.
 
+   A file containing conditional blocks is not valid TypeScript, JSON or CSS
+   as written, so editors report it as broken source. Name such a file with a
+   trailing `.tmpl` (`App.tsx.tmpl`) and the suffix is stripped when the file
+   is written, so the generated project still gets `App.tsx`. `forge lint`
+   flags any conditional template missing the suffix. Files that only use
+   `{{token}}` inside string positions stay valid in their own language and
+   need no suffix.
+
    Binary files (an icon, a font, a wrapper jar) are detected and copied
    through byte for byte rather than being treated as text, and file
    permissions are preserved, so an executable script in a template arrives
@@ -133,6 +141,7 @@ src/                the CLI itself, written in TypeScript
   *.test.ts            unit tests, run with npm test
 templates/          the built-in scaffolds, see "Creating a Custom Template" above
 .github/workflows/  ci.yml builds and tests every template, release.yml publishes on a tag
+.vscode/            maps *.tmpl to Handlebars so template sources stay readable
 ```
 
 ## Development

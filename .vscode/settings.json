@@ -1,0 +1,13 @@
+{
+  // Template sources under templates/ contain {{#if flag}} blocks, so they are
+  // not valid TypeScript, JSON or CSS until forge renders them. They carry a
+  // .tmpl suffix to keep language servers from reporting them as broken, and
+  // Handlebars highlighting is close enough to stay readable while editing.
+  "files.associations": {
+    "*.tsx.tmpl": "handlebars",
+    "*.ts.tmpl": "handlebars",
+    "*.json.tmpl": "handlebars",
+    "*.css.tmpl": "handlebars",
+    "*.md.tmpl": "markdown"
+  }
+}

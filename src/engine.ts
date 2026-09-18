@@ -103,6 +103,18 @@ export function renderPathSegment(segment: string, ctx: Context): string {
 export const GATE_RE = /^__if_([a-zA-Z0-9_]+)__(.*)$/;
 
 /**
+ * A template file that carries conditional blocks is not valid in its own
+ * language, so editors flag it as broken source. Naming such a file
+ * `App.tsx.tmpl` keeps editors out of it, and this suffix is stripped when the
+ * file is written, so the generated project still gets `App.tsx`.
+ */
+export const TEMPLATE_SUFFIX = ".tmpl";
+
+export function stripTemplateSuffix(name: string): string {
+  return name.endsWith(TEMPLATE_SUFFIX) ? name.slice(0, -TEMPLATE_SUFFIX.length) : name;
+}
+
+/**
  * Templates are mostly text, but they're allowed to carry binary payloads
  * (an icon, a font, a Maven wrapper jar). Rendering those as UTF-8 would
  * corrupt them, so they're copied through byte for byte instead. A NUL byte
@@ -172,7 +184,10 @@ export async function renderTemplate(
         );
       }
 
-      const destPath = path.join(currentDest, renderPathSegment(nameToRender, ctx));
+      const destPath = path.join(
+        currentDest,
+        stripTemplateSuffix(renderPathSegment(nameToRender, ctx)),
+      );
       files.push(path.relative(destDir, destPath));
 
       if (dryRun) continue;

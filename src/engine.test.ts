@@ -215,6 +215,29 @@ describe("renderTemplate", () => {
     assert.ok(result.files.includes(path.join("src", "com", "logan", "mycoolapp", "App.java")));
   });
 
+  it("strips the .tmpl suffix so editors can ignore template sources", async () => {
+    const src = await tmpDir("forge-src-");
+    const dest = await tmpDir("forge-dest-");
+    await fs.outputFile(path.join(src, "App.tsx.tmpl"), "const name = '{{projectName}}';\n");
+    await fs.outputFile(path.join(src, "__if_extras__helper.ts.tmpl"), "// {{projectName}}\n");
+    await fs.outputFile(path.join(src, "plain.ts"), "// {{projectName}}\n");
+
+    const result = await renderTemplate(src, dest, { ...baseContext("my app"), extras: "true" });
+
+    assert.equal(await fs.pathExists(path.join(dest, "App.tsx")), true);
+    assert.equal(await fs.pathExists(path.join(dest, "App.tsx.tmpl")), false);
+    // Gating and the suffix compose: the flag prefix goes, the suffix goes too.
+    assert.equal(await fs.pathExists(path.join(dest, "helper.ts")), true);
+    // Files without the suffix are untouched.
+    assert.equal(await fs.pathExists(path.join(dest, "plain.ts")), true);
+    assert.equal(
+      await fs.readFile(path.join(dest, "App.tsx"), "utf8"),
+      "const name = 'my-app';\n",
+      "contents are still rendered normally",
+    );
+    assert.ok(result.files.includes("App.tsx"));
+  });
+
   it("fails loudly when a gated file has no name after the flag", async () => {
     const src = await tmpDir("forge-src-");
     const dest = await tmpDir("forge-dest-");
