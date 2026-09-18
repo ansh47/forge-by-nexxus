@@ -58,13 +58,35 @@ jobs:
 
       - name: Publish to npm
         run: |
+          set -euo pipefail
           name="$(node -p "require('./package.json').name")"
           version="$(node -p "require('./package.json').version")"
-          if npm view "$name@$version" version >/dev/null 2>&1; then
+          echo "Package: '$name'  Version: '$version'"
+          if [ -z "$name" ] || [ -z "$version" ]; then
+            echo "Could not read name or version from package.json" >&2
+            exit 1
+          fi
+
+          if [ "$(npm view "$name@$version" version 2>/dev/null || true)" = "$version" ]; then
             echo "$name@$version is already on the registry, nothing to publish."
           else
             npm publish
           fi
+
+          # Verify rather than trust. A publish that quietly does nothing used
+          # to leave a green run next to a version that was never released, so
+          # the registry is checked here and the step fails if it is missing.
+          for attempt in 1 2 3 4 5 6; do
+            found="$(npm view "$name@$version" version 2>/dev/null || true)"
+            if [ "$found" = "$version" ]; then
+              echo "Confirmed $name@$version is on the registry."
+              exit 0
+            fi
+            echo "Not visible on the registry yet, retrying ($attempt of 6)..."
+            sleep 10
+          done
+          echo "$name@$version is still not on the registry after publishing." >&2
+          exit 1
 
       - name: Create the GitHub release
         env:
