@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="{{projectNameHuman}}">
+  <defs>
+    <linearGradient id="forgeTileIndigo" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6366f1" />
+      <stop offset="1" stop-color="#8b5cf6" />
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="url(#forgeTileIndigo)" />
+  <!-- Solid mark rather than a thin outline, so it still reads at 16px. -->
+  <path d="M16 5.6 25.6 11.1v9.8L16 26.4 6.4 20.9v-9.8z" fill="#ffffff" />
+  <path
+    d="M11.3 13.1 16 15.8l4.7-2.7"
+    fill="none"
+    stroke="#4f46e5"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
