@@ -69,6 +69,13 @@ jobs:
           npx tsc -b
           npx vite build
 
+      # Scaffolded projects are what other people run, so a known advisory in
+      # the dependencies this template pins should fail here rather than be
+      # discovered by whoever used it.
+      - name: Audit the generated project
+        working-directory: /tmp/out/${{ matrix.case.buildIn }}
+        run: npm audit --audit-level=moderate
+
   templates-java:
     name: Build Java templates
     runs-on: ubuntu-latest
@@ -105,6 +112,9 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npm run build
+      - name: Audit the generated frontend
+        working-directory: /tmp/fullstack/frontend
+        run: npm audit --audit-level=moderate
 
   templates-python:
     name: Build gambit template
