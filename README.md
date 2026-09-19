@@ -1,6 +1,8 @@
 # Forge by Nexxus
 
-A personal, extensible project scaffold generator. Forge spins up new projects from a set of built-in templates, filling in variables such as the project name, Java package, and any optional add-ons you choose along the way.
+Scaffolds React, Spring Boot and Python projects that build before you touch them. Every template is installed and built in CI before it ships, so what you get is a working project rather than a starting point that needs fixing first.
+
+The choices are already made: exact dependency versions, one structure per stack, and a worked example instead of an empty file. Optional add-ons are a fixed list rather than a plugin system, and declining one leaves nothing behind, with no config file, no import and no dependency to delete afterwards. If a choice does not suit you, the extension point is writing your own template, which is a directory of real files rather than a plugin API.
 
 ## Features
 

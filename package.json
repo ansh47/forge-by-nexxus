@@ -1,7 +1,7 @@
 {
   "name": "forge-by-nexxus",
   "version": "0.4.1",
-  "description": "A personal, extensible project scaffold generator. Spins up new projects from your own templates.",
+  "description": "Scaffolds React, Spring Boot and Python projects that build before you touch them. Versions and structure are decided, and add-ons you decline leave nothing behind.",
   "license": "MIT",
   "author": "Ankit Shrivastava",
   "keywords": [
